@@ -1,0 +1,65 @@
+[tool.poetry]
+name = "coffee-api"
+version = "0.1.5"
+description = ""
+authors = [
+    "Albert Attard <albertattard@gmail.com>",
+    "Baran Demir <social@bdemir.de>",
+    "Björn Eberhardt <beberhar@thoughtworks.com>",
+    "Dan Lafeir <danlafeir@users.noreply.github.com>",
+    "Ina Hartmann <nhartman@thoughtworks.com>",
+    "Jaydeep Chakrabarty <jaydeepc@in-Jaydeepc-3089.local>",
+    "Martin Soto <donsoto@gmail.com>",
+    "Nilakhya Chatterjee <nilakhya.chatterjee@thoughtworks.com>",
+]
+readme = "README.md"
+packages = [{ include = "src" }]
+
+[tool.poetry.dependencies]
+fastapi = "^0.110.1"
+httpx = "^0.27.0"
+loguru = "^0.7.2"
+tortoise-orm = {extras = ["asyncpg", "accel"], version = "^0.21.3"}
+python = "^3.12"
+uvicorn = "^0.29.0"
+pydantic = {extras = ["email", "dotenv"], version = "^2.8.2"}
+fastapi-users = "^13.0.0"
+fastapi-users-tortoise = "^0.2.0"
+aerich = "^0.7.2"
+python-multipart = "^0.0.9"
+pydantic-settings = "^2.3.4"
+
+[tool.poetry.group.tests]
+optional = true
+[tool.poetry.group.tests.dependencies]
+pytest = "^8.1.1"
+pytest-cov = "^5.0.0"
+ipython = "^8.11.0"
+
+[tool.poetry.group.ci]
+optional = true
+[tool.poetry.group.ci.dependencies]
+ruff = "^0.3.5"
+black = "^24.3.0"
+
+[[tool.poetry.source]]
+name = "PyPI"
+priority = "primary"
+
+
+[tool.aerich]
+tortoise_orm = "src.db.tortoise.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.ruff]
+line-length = 120
+lint.select = ["I00", "E", "F", "W"]
+
+[tool.black]
+line-length = 120
+target-version = ['py39']
