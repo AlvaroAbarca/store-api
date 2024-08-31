@@ -29,6 +29,9 @@ aerich = "^0.7.2"
 python-multipart = "^0.0.9"
 pydantic-settings = "^2.3.4"
 
+[tool.poetry.group.dev.dependencies]
+
+
 [tool.poetry.group.tests]
 optional = true
 [tool.poetry.group.tests.dependencies]

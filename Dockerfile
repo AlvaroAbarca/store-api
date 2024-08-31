@@ -1,38 +1,43 @@
-FROM python:3.12-slim as builder
-RUN useradd -rm -d /home/user -u 1001 user && \
-    mkdir -p /home/user/app && \
-    chown -R user /home/user/app
-USER user
+FROM python:3.12-alpine AS base
 
-WORKDIR /home/user/
+ARG DEV=false
+ENV VIRTUAL_ENV=/app/.venv \
+    PATH="/app/.venv/bin:$PATH"
 
-COPY app.py poetry.lock pyproject.toml README.md app/
-COPY src/ app/src/
+RUN apk update && \
+    apk add libpq
 
-WORKDIR /home/user/app
 
-RUN pip install --upgrade pip && \
-    pip install --no-cache-dir --user poetry==1.8.1
+FROM base AS builder
 
-RUN export PATH="${PATH}":"${HOME}"/.local/bin && \
-    poetry config virtualenvs.in-project true && \
-    poetry lock --no-update && \
-    poetry install --only main
-# RUN pip install poetry==1.8.1 --user --no-cache-dir && \
-#     export PATH="${PATH}":"${HOME}"/.local/bin && \
-#     poetry config virtualenvs.in-project true && \
-#     poetry install --only main
+ENV POETRY_NO_INTERACTION=1 \
+    POETRY_VIRTUALENVS_IN_PROJECT=1 \
+    POETRY_VIRTUALENVS_CREATE=1 \
+    POETRY_CACHE_DIR=/tmp/poetry_cache
 
-FROM python:3.12-slim
-RUN useradd -rm -d /home/user -u 1001 user && \
-    mkdir -p /home/user/app && \
-    chown -R user /home/user/app
-USER user
+RUN apk update && \
+    apk add musl-dev build-base gcc gfortran openblas-dev
 
-COPY --from=builder /home/user/app/ /home/user/app/
-ENV PATH=/home/user/app/.venv/bin:$PATH
-ENV PYTHONUNBUFFERED 1
+WORKDIR /app
 
-WORKDIR /home/user/app
+# Install Poetry
+RUN pip install poetry==1.8.1
 
-CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8020"]
+# Install the app
+COPY pyproject.toml poetry.lock app.py ./
+RUN if [ $DEV ]; then \
+      poetry install --with dev --no-root && rm -rf $POETRY_CACHE_DIR; \
+    else \
+      poetry install --without dev --no-root && rm -rf $POETRY_CACHE_DIR; \
+    fi
+
+
+FROM base AS runtime
+
+COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+COPY src ./src
+
+WORKDIR /app/src
+
+ENTRYPOINT ["python", "-m", "app.main"]
